@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
+    "title": "Talvin API",
+    "description": "Talvin API provides endpoints for managing interviews, responses, and subscriptions to events.",
     "license": {
       "name": "MIT"
     },
@@ -10,38 +10,137 @@
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://app.talvin.ai/api/v1"
     }
   ],
   "security": [
     {
-      "bearerAuth": []
+      "talvinApiKey": [],
+      "talvinOrgId": []
     }
   ],
   "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
+    "/subscribe": {
+      "post": {
+        "description": "Subscribe to events with a webhook URL",
+        "requestBody": {
+          "description": "Subscription details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/unsubscribe/{subscription_id}": {
+      "delete": {
+        "description": "Unsubscribe from events by subscription ID",
         "parameters": [
           {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the subscription to delete"
             }
           }
         ],
         "responses": {
+          "204": {
+            "description": "Subscription successfully deleted"
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/whoami": {
+      "get": {
+        "description": "Returns information about the authenticated organization",
+        "parameters": [],
+        "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Organization information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhoAmIResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/interviews": {
+      "get": {
+        "description": "Returns all interviews that the organization has created",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Interview response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Plant"
+                    "$ref": "#/components/schemas/Interview"
                   }
                 }
               }
@@ -96,28 +195,74 @@
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/interviews/{interview_id}": {
+      "get": {
+        "description": "Returns a specific interview by ID",
         "parameters": [
           {
-            "name": "id",
+            "name": "interview_id",
             "in": "path",
-            "description": "ID of plant to delete",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string",
+              "description": "Unique identifier of the interview to retrieve"
             }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
+          "200": {
+            "description": "Interview details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            }
           },
           "400": {
-            "description": "unexpected error",
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Interview not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/responses": {
+      "get": {
+        "description": "Returns all responses that the organization has received.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Response data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseItem"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
             "content": {
               "application/json": {
                 "schema": {
@@ -154,41 +299,136 @@
   },
   "components": {
     "schemas": {
-      "Plant": {
+      "EventType": {
+        "type": "string",
+        "enum": [
+          "new_interview",
+          "new_response",
+          "candidate_status_changed"
+        ],
+        "description": "Type of event to subscribe to"
+      },
+      "SubscriptionRequest": {
+        "type": "object",
         "required": [
-          "name"
+          "hookUrl",
+          "eventType"
+        ],
+        "properties": {
+          "hookUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to receive webhook events"
+          },
+          "eventType": {
+            "$ref": "#/components/schemas/EventType"
+          }
+        }
+      },
+      "SubscriptionResponse": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the subscription"
+          }
+        }
+      },
+      "WhoAmIResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the request was successful"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the organization"
+              },
+              "name": {
+                "type": "string",
+                "description": "Name of the organization"
+              }
+            }
+          }
+        }
+      },
+      "Interview": {
+        "required": [
+          "id",
+          "name",
+          "question_count",
+          "time_duration",
+          "questions",
+          "description"
         ],
         "type": "object",
         "properties": {
-          "name": {
-            "description": "The name of the plant",
+          "id": {
+            "description": "Unique identifier for the interview",
             "type": "string"
           },
-          "tag": {
-            "description": "Tag to specify the type",
+          "name": {
+            "description": "Name of the interview",
+            "type": "string"
+          },
+          "question_count": {
+            "description": "Number of questions in the interview",
+            "type": "integer"
+          },
+          "time_duration": {
+            "description": "Time duration for the interview in minutes",
+            "type": "string"
+          },
+          "questions": {
+            "description": "List of questions in the interview",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            }
+          },
+          "description": {
+            "description": "Description of the interview",
             "type": "string"
           }
         }
       },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
+      "Question": {
+        "required": [
+          "id",
+          "question",
+          "follow_up_count"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Unique identifier for the question",
+            "type": "string"
           },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
+          "question": {
+            "description": "The question text",
+            "type": "string"
+          },
+          "follow_up_count": {
+            "description": "Number of follow-up questions",
+            "type": "integer"
           }
-        ]
+        }
       },
       "Error": {
         "required": [
@@ -205,12 +445,83 @@
             "type": "string"
           }
         }
+      },
+      "ResponseItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "name",
+          "email",
+          "call_id",
+          "duration",
+          "interview"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the response"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the response was created"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the respondent"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the respondent"
+          },
+          "call_id": {
+            "type": "string",
+            "description": "Unique identifier for the call session"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Duration of the interview in minutes"
+          },
+          "interview": {
+            "$ref": "#/components/schemas/ResponseInterview"
+          }
+        }
+      },
+      "ResponseInterview": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "organization_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the interview"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the interview"
+          },
+          "organization_id": {
+            "type": "string",
+            "description": "Identifier of the organization that owns the interview"
+          }
+        }
       }
     },
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+      "talvinOrgId": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-TALVIN-ORGANIZATION-ID"
+      },
+      "talvinApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-TALVIN-API-KEY"
       }
     }
   }

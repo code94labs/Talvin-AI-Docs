@@ -1,33 +1,48 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'Managing API Keys for Talvin AI'
+description: 'Learn how to securely generate, manage, and revoke API keys to integrate Talvin AI with your applications.'
 ---
-
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
 
 ## Welcome
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+Integrate Talvin AI seamlessly with your applications by managing API keys securely. Follow the steps below to generate, rotate, and revoke API keys through the Talvin AI platform.
 
 <Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
+  title="Talvin AI Platform"
+  icon="link"
+  href="https://app.talvin.ai"
 >
-  View the OpenAPI specification file
+  Visit the Talvin AI platform to get started
 </Card>
 
-## Authentication
+## Accessing API Key Management
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+1. **Log in to Talvin AI**: Go to [https://app.talvin.ai](https://app.talvin.ai) and sign in to your account.
+2. **Navigate to Settings**: In the application, go to the **Settings** section.
+3. **Select Integrations**: Click on **Integrations** to access the **API Keys** section.
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
-```
+## Understanding Your Organization ID
+
+At the top of the **Integrations** page, you’ll find your **Organization ID** (e.g., `org_2wfr1fypcw3QC6quBxj2XRcuRGq`). This unique identifier is essential for configuring integrations and contacting support for assistance with your account's integrations. To copy it, click the copy icon next to the ID.
+
+## Creating a New API Key
+
+1. In the **API Keys** section, click the **Create API Key** button.
+2. A **Create New API Key** pop-up will appear. Enter a descriptive name for your API key (e.g., `Production API Key`).
+3. Click **Create API Key** in the pop-up.
+4. A **Your New API Key** pop-up will display the generated API key. **Important**: Copy or download this key immediately, as it will not be visible again for security reasons.
+
+## Rotating an API Key
+
+1. Locate the API key you wish to rotate in the **API Keys** list.
+2. Under the **Actions** column, click the **Rotate** icon (a circular arrow).
+3. A **Rotate API Key** pop-up will appear, warning that this action will generate a new key and invalidate the old one, requiring updates in any services using it.
+4. Click **Rotate Key** to confirm.
+5. A **Your New API Key** pop-up will display the new API key. **Important**: Copy or download this key immediately, as it will not be visible again for security reasons.
+
+## Revoking an API Key
+
+1. Locate the API key you wish to revoke in the **API Keys** list.
+2. Under the **Actions** column, click the **Delete** or **Revoke** icon (a trash can).
+3. A **Revoke API Key** pop-up will appear, stating that this action cannot be undone and will permanently revoke the API key, breaking any integrations using it.
+4. Click **Revoke Key** to confirm. A success notification will appear at the bottom right.
